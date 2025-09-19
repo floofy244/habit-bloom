@@ -19,7 +19,7 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     '0.0.0.0',
-    '.vercel.app',
+    '.onrender.com',
     '.now.sh'
 ]
 
