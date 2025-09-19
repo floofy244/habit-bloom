@@ -10,7 +10,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me-in-production')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -135,6 +135,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://habitbloom.vercel.app",
     "https://habitbloom-frontend.vercel.app",
+    "https://habitbloom-backend.onrender.com", 
+    "https://habitbloom.onrender.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
