@@ -1,65 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../api';
 
-// Create axios instance with automatic JWT token handling
-const apiClient = axios.create({
-  baseURL: '', // Use relative URLs since frontend is served from same domain
-});
-
-// Request interceptor to add auth token to all requests
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    console.log('API Request:', config.url, 'Token:', token ? token.substring(0, 50) + '...' : 'MISSING');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('Authorization header set:', config.headers.Authorization);
-    } else {
-      console.error('No access token found in localStorage!');
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle token refresh
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        const refreshTokenValue = localStorage.getItem('refreshToken');
-        if (refreshTokenValue) {
-          const response = await axios.post('/api/token/refresh/', {
-            refresh: refreshTokenValue
-          });
-          
-          const { access } = response.data;
-          localStorage.setItem('accessToken', access);
-          originalRequest.headers.Authorization = `Bearer ${access}`;
-          
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-      }
-    }
-    
-    return Promise.reject(error);
-  }
-);
-
-// Export the configured axios instance
-export { apiClient };
+// Export the configured axios instance for backward compatibility
+export { api as apiClient };
 
 const AuthContext = createContext();
 
@@ -86,7 +30,7 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('accessToken');
       if (token) {
         console.log('Fetching user with token:', token.substring(0, 20) + '...');
-        const response = await apiClient.get('/api/auth/profile/');
+        const response = await api.get('auth/profile/');
         setUser(response.data);
       }
     } catch (error) {
@@ -109,7 +53,7 @@ export function AuthProvider({ children }) {
         throw new Error('No refresh token available');
       }
 
-      const response = await axios.post('/api/token/refresh/', {
+      const response = await axios.post('https://habitbloom.onrender.com/api/token/refresh/', {
         refresh: refreshTokenValue
       });
 
@@ -118,7 +62,7 @@ export function AuthProvider({ children }) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       
       // Retry the original request
-      const userResponse = await axios.get('/api/auth/profile/');
+      const userResponse = await api.get('auth/profile/');
       setUser(userResponse.data);
     } catch (error) {
       console.error('Token refresh failed:', error);
@@ -131,7 +75,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login/', { email, password });
+      const response = await axios.post('https://habitbloom.onrender.com/api/auth/login/', { email, password });
       const { user: userData, access, refresh } = response.data;
 
       console.log('Login successful, storing tokens');
@@ -139,6 +83,7 @@ export function AuthProvider({ children }) {
       console.log('Refresh token:', refresh ? refresh.substring(0, 50) + '...' : 'MISSING');
       console.log('Full response data:', response.data);
       
+      // Store tokens in localStorage
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       setUser(userData);
@@ -185,7 +130,7 @@ export function AuthProvider({ children }) {
 
   const register = async (email, username, password, passwordConfirm) => {
     try {
-      const response = await axios.post('/api/auth/register/', {
+      const response = await axios.post('https://habitbloom.onrender.com/api/auth/register/', {
         email,
         username,
         password,
@@ -240,7 +185,7 @@ export function AuthProvider({ children }) {
     try {
       const refreshTokenValue = localStorage.getItem('refreshToken');
       if (refreshTokenValue) {
-        await axios.post('/api/token/blacklist/', { refresh: refreshTokenValue });
+        await axios.post('https://habitbloom.onrender.com/api/token/blacklist/', { refresh: refreshTokenValue });
       }
     } catch (error) {
       console.error('Logout error:', error);

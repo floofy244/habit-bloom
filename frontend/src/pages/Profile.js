@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, apiClient } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../api';
 import { toast } from 'react-toastify';
 import {
   Box,
@@ -36,8 +37,7 @@ function Profile() {
 
   const fetchProfileData = async () => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      const response = await apiClient.get('/api/habits/dashboard/');
+      const response = await api.get('habits/dashboard/');
       setProfileData(response.data);
     } catch (error) {
       console.error('Error fetching profile data:', error);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { apiClient } from '../contexts/AuthContext';
+import api from '../api';
 import {
   Box,
   Container,
@@ -57,8 +57,7 @@ function Habits() {
 
   const fetchHabits = async () => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      const response = await apiClient.get('/api/habits/');
+      const response = await api.get('habits/');
       setHabits(response.data);
     } catch (error) {
       console.error('Error fetching habits:', error);
@@ -70,8 +69,7 @@ function Habits() {
 
   const fetchCategories = async () => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      const response = await apiClient.get('/api/categories/');
+      const response = await api.get('categories/');
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -89,12 +87,11 @@ function Habits() {
     e.preventDefault();
     
     try {
-      // Use relative URL since frontend is served from same domain as backend
       if (editingHabit) {
-        await apiClient.put(`/api/habits/${editingHabit.id}/`, formData);
+        await api.put(`habits/${editingHabit.id}/`, formData);
         toast.success('Habit updated successfully!');
       } else {
-        await apiClient.post('/api/habits/', formData);
+        await api.post('habits/', formData);
         toast.success('Habit created successfully!');
       }
       
@@ -128,8 +125,7 @@ function Habits() {
   const handleDelete = async (habitId) => {
     if (window.confirm('Are you sure you want to delete this habit?')) {
       try {
-        // Use relative URL since frontend is served from same domain as backend
-        await apiClient.delete(`/api/habits/${habitId}/`);
+        await api.delete(`habits/${habitId}/`);
         toast.success('Habit deleted successfully!');
         fetchHabits();
       } catch (error) {
@@ -140,8 +136,7 @@ function Habits() {
 
   const completeHabit = async (habitId) => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      await apiClient.post(`/api/habits/${habitId}/complete/`);
+      await api.post(`habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
       fetchHabits();
     } catch (error) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, apiClient } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../api';
 import { toast } from 'react-toastify';
 import {
   Box,
@@ -38,7 +39,7 @@ function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await apiClient.get('/api/habits/dashboard/');
+      const response = await api.get('habits/dashboard/');
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -50,7 +51,7 @@ function Dashboard() {
 
   const completeHabit = async (habitId) => {
     try {
-      await apiClient.post(`/api/habits/${habitId}/complete/`);
+      await api.post(`habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
       fetchDashboardData(); // Refresh data
     } catch (error) {
