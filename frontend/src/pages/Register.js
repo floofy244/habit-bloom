@@ -63,7 +63,7 @@ function Register() {
     );
     
     if (result.success) {
-      toast.success('Account created successfully! Welcome to HabitBloom!');
+      toast.success('Account created successfully! Welcome to HabitBloom! You can now start building your habits.');
       navigate('/dashboard');
     } else {
       toast.error(result.error);

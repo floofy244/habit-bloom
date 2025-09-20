@@ -45,14 +45,14 @@ function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
-      toast.success('Welcome back!');
-      navigate('/dashboard');
-    } else {
-      toast.error(result.error);
-    }
+          const result = await login(formData.email, formData.password);
+
+          if (result.success) {
+            toast.success('Welcome back! You have been successfully logged in.');
+            navigate('/dashboard');
+          } else {
+            toast.error(result.error);
+          }
     
     setLoading(false);
   };

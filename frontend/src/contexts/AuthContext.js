@@ -85,9 +85,37 @@ export function AuthProvider({ children }) {
 
       return { success: true };
     } catch (error) {
+      let errorMessage = 'Login failed';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (error.response?.status === 400) {
+        const details = error.response?.data?.details;
+        if (details) {
+          // Handle specific field errors
+          if (details.email) {
+            errorMessage = `Email error: ${details.email[0]}`;
+          } else if (details.password) {
+            errorMessage = `Password error: ${details.password[0]}`;
+          } else if (details.non_field_errors) {
+            errorMessage = details.non_field_errors[0];
+          } else {
+            errorMessage = error.response.data.error || 'Please check your input and try again.';
+          }
+        } else {
+          errorMessage = error.response.data.error || 'Please provide both email and password.';
+        }
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (!error.response) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.error || 'Login failed'
+        error: errorMessage
       };
     }
   };
@@ -110,9 +138,39 @@ export function AuthProvider({ children }) {
 
       return { success: true };
     } catch (error) {
+      let errorMessage = 'Registration failed';
+      
+      if (error.response?.status === 400) {
+        const details = error.response?.data?.details;
+        if (details) {
+          // Handle specific validation errors
+          if (details.email) {
+            errorMessage = `Email error: ${details.email[0]}`;
+          } else if (details.username) {
+            errorMessage = `Username error: ${details.username[0]}`;
+          } else if (details.password) {
+            errorMessage = `Password error: ${details.password[0]}`;
+          } else if (details.password_confirm) {
+            errorMessage = `Password confirmation error: ${details.password_confirm[0]}`;
+          } else if (details.non_field_errors) {
+            errorMessage = details.non_field_errors[0];
+          } else {
+            errorMessage = error.response.data.error || 'Please check your input and try again.';
+          }
+        } else {
+          errorMessage = error.response.data.error || 'Please check your input and try again.';
+        }
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (!error.response) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.error || 'Registration failed'
+        error: errorMessage
       };
     }
   };
