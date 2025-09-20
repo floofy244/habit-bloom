@@ -26,12 +26,15 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('accessToken');
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Fetching user with token:', token.substring(0, 20) + '...');
         // Use relative URL since frontend is served from same domain as backend
         const response = await axios.get('/api/auth/profile/');
         setUser(response.data);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
+      console.error('Response status:', error.response?.status);
+      console.error('Response data:', error.response?.data);
       // If token is invalid, try to refresh it
       if (error.response?.status === 401) {
         await refreshToken();
@@ -78,6 +81,7 @@ export function AuthProvider({ children }) {
       const response = await axios.post('/api/auth/login/', { email, password });
       const { user: userData, access, refresh } = response.data;
 
+      console.log('Login successful, storing tokens');
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
@@ -85,6 +89,9 @@ export function AuthProvider({ children }) {
 
       return { success: true };
     } catch (error) {
+      console.error('Login error:', error);
+      console.error('Response status:', error.response?.status);
+      console.error('Response data:', error.response?.data);
       let errorMessage = 'Login failed';
       
       if (error.response?.status === 401) {

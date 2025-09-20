@@ -23,6 +23,7 @@ class HabitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
+        print(f"Habit request - User: {self.request.user}, Auth header: {self.request.META.get('HTTP_AUTHORIZATION', 'None')}")
         return Habit.objects.filter(user=self.request.user, is_active=True)
     
     def get_serializer_class(self):

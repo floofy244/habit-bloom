@@ -61,6 +61,7 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def profile(request):
     """Get user profile."""
+    print(f"Profile request - User: {request.user}, Auth header: {request.META.get('HTTP_AUTHORIZATION', 'None')}")
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 
