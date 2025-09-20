@@ -9,7 +9,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
-    startCommand: gunicorn habitbloom.wsgi:application
+    startCommand: gunicorn habitbloom.wsgi:application -c gunicorn.conf.py
     envVars:
       - key: SECRET_KEY
         generateValue: true

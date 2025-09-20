@@ -23,6 +23,10 @@ ALLOWED_HOSTS = [
     '.now.sh'
 ]
 
+# Add Render environment support
+if 'RENDER' in os.environ:
+    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME', ''))
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
