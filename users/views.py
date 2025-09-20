@@ -2,8 +2,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import login
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
 
 
@@ -15,10 +15,11 @@ def register(request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user).data,
-                'token': token.key
+                'access': str(refresh.access_token),
+                'refresh': str(refresh)
             }, status=status.HTTP_201_CREATED)
         return Response({
             'error': 'Invalid data provided',
@@ -36,19 +37,26 @@ def register(request):
 def login_view(request):
     """Login a user."""
     try:
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            login(request, user)
-            token, created = Token.objects.get_or_create(user=user)
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not email or not password:
+            return Response({
+                'error': 'Email and password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=email, password=password)
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user).data,
-                'token': token.key
+                'access': str(refresh.access_token),
+                'refresh': str(refresh)
             }, status=status.HTTP_200_OK)
-        return Response({
-            'error': 'Invalid credentials',
-            'details': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({
+                'error': 'Invalid credentials'
+            }, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         return Response({
             'error': 'Login failed',
@@ -69,7 +77,13 @@ def profile(request):
 def logout(request):
     """Logout a user."""
     try:
-        request.user.auth_token.delete()
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
         return Response({'message': 'Successfully logged out.'}, status=status.HTTP_200_OK)
-    except:
-        return Response({'error': 'Error logging out.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            'error': 'Error logging out.',
+            'details': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
