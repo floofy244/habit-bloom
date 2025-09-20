@@ -1,92 +1,130 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, Target, Home } from 'lucide-react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
+  Chip,
+  Container,
+} from '@mui/material';
+import {
+  Home as HomeIcon,
+  Assignment as HabitsIcon,
+  Person as PersonIcon,
+  Logout as LogoutIcon,
+  Spa as LogoIcon,
+} from '@mui/icons-material';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-soft border-b border-neutral-200 sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-soft group-hover:shadow-soft-lg transition-all duration-300 group-hover:scale-105">
-              <span className="text-white font-bold text-xl">🌱</span>
-            </div>
-            <span className="text-2xl font-bold text-primary group-hover:text-secondary-600 transition-colors duration-300">HabitBloom</span>
-          </Link>
+    <AppBar position="sticky" elevation={1}>
+      <Container maxWidth="lg">
+        <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
+          <Box component={Link} to="/" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+            <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+              <LogoIcon />
+            </Avatar>
+            <Typography variant="h5" component="div" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              HabitBloom
+            </Typography>
+          </Box>
 
           {user ? (
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-3 bg-gradient-to-r from-primary-50 to-secondary-50 px-4 py-2 rounded-xl border border-primary-200">
-                <span className="text-sm font-semibold text-primary-700">Level {user.current_level}</span>
-                <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center shadow-soft">
-                  <span className="text-white font-bold text-sm">
-                    {user.total_points}
-                  </span>
-                </div>
-              </div>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Chip
+                label={`Level ${user.current_level}`}
+                color="primary"
+                variant="outlined"
+                size="small"
+              />
+              <Chip
+                label={`${user.total_points} pts`}
+                color="secondary"
+                size="small"
+              />
               
-              <div className="flex items-center space-x-1">
-                <Link
-                  to="/dashboard"
-                  className="flex items-center space-x-2 text-neutral-600 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-all duration-200 font-medium"
-                >
-                  <Home size={20} />
-                  <span>Dashboard</span>
-                </Link>
-                
-                <Link
-                  to="/habits"
-                  className="flex items-center space-x-2 text-neutral-600 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-all duration-200 font-medium"
-                >
-                  <Target size={20} />
-                  <span>Habits</span>
-                </Link>
-                
-                <Link
-                  to="/profile"
-                  className="flex items-center space-x-2 text-neutral-600 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-all duration-200 font-medium"
-                >
-                  <User size={20} />
-                  <span>Profile</span>
-                </Link>
-                
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 text-neutral-600 hover:text-error-600 px-4 py-2 rounded-lg hover:bg-error-50 transition-all duration-200 font-medium"
-                >
-                  <LogOut size={20} />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
+              <Button
+                component={Link}
+                to="/dashboard"
+                startIcon={<HomeIcon />}
+                sx={{ color: 'text.secondary' }}
+              >
+                Dashboard
+              </Button>
+              
+              <Button
+                component={Link}
+                to="/habits"
+                startIcon={<HabitsIcon />}
+                sx={{ color: 'text.secondary' }}
+              >
+                Habits
+              </Button>
+              
+              <Button
+                component={Link}
+                to="/profile"
+                startIcon={<PersonIcon />}
+                sx={{ color: 'text.secondary' }}
+              >
+                Profile
+              </Button>
+              
+              <Button
+                onClick={handleLogout}
+                startIcon={<LogoutIcon />}
+                color="error"
+              >
+                Logout
+              </Button>
+            </Box>
           ) : (
-            <div className="flex items-center space-x-4">
-              <Link
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Button
+                component={Link}
                 to="/login"
-                className="text-neutral-600 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-primary-50 transition-all duration-200 font-medium"
+                color="inherit"
+                sx={{ color: 'text.secondary' }}
               >
                 Login
-              </Link>
-              <Link
+              </Button>
+              <Button
+                component={Link}
                 to="/register"
-                className="btn btn-primary"
+                variant="contained"
+                color="primary"
               >
                 Sign Up
-              </Link>
-            </div>
+              </Button>
+            </Box>
           )}
-        </div>
-      </div>
-    </nav>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }
 

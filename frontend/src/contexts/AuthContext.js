@@ -23,8 +23,8 @@ export function AuthProvider({ children }) {
 
   const fetchUser = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await axios.get(`${apiUrl}/api/auth/profile/`);
+      // Use relative URL since frontend is served from same domain as backend
+      const response = await axios.get('/api/auth/profile/');
       setUser(response.data);
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -37,8 +37,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await axios.post(`${apiUrl}/api/auth/login/`, { email, password });
+      // Use relative URL since frontend is served from same domain as backend
+      const response = await axios.post('/api/auth/login/', { email, password });
       const { user: userData, token } = response.data;
       
       localStorage.setItem('token', token);
@@ -56,8 +56,8 @@ export function AuthProvider({ children }) {
 
   const register = async (email, username, password, passwordConfirm) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await axios.post(`${apiUrl}/api/auth/register/`, {
+      // Use relative URL since frontend is served from same domain as backend
+      const response = await axios.post('/api/auth/register/', {
         email,
         username,
         password,
@@ -80,8 +80,8 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      await axios.post(`${apiUrl}/api/auth/logout/`);
+      // Use relative URL since frontend is served from same domain as backend
+      await axios.post('/api/auth/logout/');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

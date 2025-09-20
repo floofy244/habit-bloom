@@ -148,17 +148,39 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "https://habitbloom.onrender.com",
     "https://habitbloom.vercel.app",
     "https://habitbloom-frontend.vercel.app",
-    "https://habitbloom-backend.onrender.com", 
-    "https://habitbloom.onrender.com"
+    "https://habitbloom-backend.onrender.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# For production, allow all origins (be more restrictive in production)
+# Allow all origins for production (since we're serving frontend from same domain)
 if not DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
+
+# Additional CORS headers for better compatibility
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
