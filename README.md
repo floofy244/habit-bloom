@@ -34,75 +34,59 @@ A beautiful habit tracking application built with React and Django, featuring a 
 ### Prerequisites
 - Python 3.8+
 - Node.js 16+
-- PostgreSQL
+- PostgreSQL (Supabase recommended)
 
-### Backend Setup
+### Local Development Setup
 
-1. Navigate to the project directory:
-   ```bash
-   cd habit-bloom-main
-   ```
-
-2. Install Python dependencies:
+1. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Set up environment variables (create a `.env` file):
+2. Set up environment variables (create a `.env` file):
    ```
    SECRET_KEY=your-secret-key-here
    DEBUG=True
-   DB_NAME=habitbloom
-   DB_USER=postgres
-   DB_PASSWORD=password
-   DB_HOST=localhost
+   DB_NAME=your_db_name
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_HOST=your_db_host
    DB_PORT=5432
-   DB_SSL=False
+   DB_SSL=True
    ```
 
-4. Run migrations:
+3. Run migrations:
    ```bash
    python manage.py migrate
    ```
 
-5. Create a superuser:
+4. Create a superuser:
    ```bash
    python manage.py createsuperuser
    ```
 
-6. Start the backend server:
+5. Install frontend dependencies:
    ```bash
-   python manage.py runserver
-   ```
-
-   Or use the provided batch file:
-   ```bash
-   start_backend.bat
-   ```
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd habit-bloom-main/frontend
-   ```
-
-2. Install dependencies:
-   ```bash
+   cd frontend
    npm install
+   cd ..
    ```
 
-3. Start the development server:
+6. Start both servers:
    ```bash
+   # Terminal 1 - Backend
+   python manage.py runserver
+   
+   # Terminal 2 - Frontend
+   cd frontend
    npm start
    ```
 
-   Or use the provided batch file:
-   ```bash
-   start_frontend.bat
-   ```
+7. Open [http://localhost:3000](http://localhost:3000) to view the app
 
-4. Open [http://localhost:3000](http://localhost:3000) to view the app
+### Deployment to Render
+
+This application is configured for easy deployment to Render with Supabase. See `RENDER_DEPLOYMENT.md` for detailed deployment instructions.
 
 ## API Endpoints
 
