@@ -9,4 +9,5 @@ router.register(r'categories', CategoryViewSet, basename='category')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('habits/dashboard/', HabitViewSet.as_view({'get': 'dashboard'}), name='habits-dashboard'),
 ]

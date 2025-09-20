@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
 
   const fetchUser = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       const response = await axios.get(`${apiUrl}/api/auth/profile/`);
       setUser(response.data);
     } catch (error) {
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       const response = await axios.post(`${apiUrl}/api/auth/login/`, { email, password });
       const { user: userData, token } = response.data;
       
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
 
   const register = async (email, username, password, passwordConfirm) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       const response = await axios.post(`${apiUrl}/api/auth/register/`, {
         email,
         username,
@@ -80,7 +80,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       await axios.post(`${apiUrl}/api/auth/logout/`);
     } catch (error) {
       console.error('Logout error:', error);

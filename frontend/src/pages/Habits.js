@@ -33,7 +33,7 @@ function Habits() {
 
   const fetchHabits = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       const response = await axios.get(`${apiUrl}/api/habits/`);
       setHabits(response.data);
     } catch (error) {
@@ -46,7 +46,7 @@ function Habits() {
 
   const fetchCategories = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       const response = await axios.get(`${apiUrl}/api/categories/`);
       setCategories(response.data);
     } catch (error) {
@@ -65,7 +65,7 @@ function Habits() {
     e.preventDefault();
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       if (editingHabit) {
         await axios.put(`${apiUrl}/api/habits/${editingHabit.id}/`, formData);
         toast.success('Habit updated successfully!');
@@ -104,7 +104,7 @@ function Habits() {
   const handleDelete = async (habitId) => {
     if (window.confirm('Are you sure you want to delete this habit?')) {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || '';
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
         await axios.delete(`${apiUrl}/api/habits/${habitId}/`);
         toast.success('Habit deleted successfully!');
         fetchHabits();
@@ -116,7 +116,7 @@ function Habits() {
 
   const completeHabit = async (habitId) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
       await axios.post(`${apiUrl}/api/habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
       fetchHabits();
@@ -150,17 +150,17 @@ function Habits() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-soft">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Habits</h1>
-            <p className="text-gray-600">Track and manage your daily habits</p>
+            <h1 className="text-4xl font-bold text-primary mb-2">My Habits 🌱</h1>
+            <p className="text-lg text-neutral-600">Track and manage your daily habits</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="btn btn-primary"
+            className="btn btn-primary text-lg px-6 py-3"
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Habit
@@ -169,8 +169,8 @@ function Habits() {
 
         {/* Add/Edit Form */}
         {showForm && (
-          <div className="card mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="card shadow-soft-lg mb-8">
+            <h3 className="text-2xl font-bold text-primary mb-6 text-center">
               {editingHabit ? 'Edit Habit' : 'Add New Habit'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -257,44 +257,46 @@ function Habits() {
 
         {/* Habits List */}
         {habits.length === 0 ? (
-          <div className="card text-center py-12">
-            <Target className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No habits yet</h3>
-            <p className="text-gray-600 mb-6">Start building your habits by creating your first one!</p>
+          <div className="card shadow-soft text-center py-16">
+            <div className="w-24 h-24 bg-gradient-to-br from-primary-100 to-secondary-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-float">
+              <Target className="h-12 w-12 text-primary-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-primary mb-3">No habits yet</h3>
+            <p className="text-lg text-neutral-600 mb-8">Start building your habits by creating your first one!</p>
             <button
               onClick={() => setShowForm(true)}
-              className="btn btn-primary"
+              className="btn btn-primary text-lg px-8 py-4"
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-6 w-6 mr-2" />
               Create Your First Habit
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {habits.map((habit) => (
-              <div key={habit.id} className="card">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      habit.is_completed_today ? 'bg-green-500' : 'bg-gray-300'
+              <div key={habit.id} className="card shadow-soft hover:shadow-soft-lg transition-all duration-300">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-4 h-4 rounded-full shadow-soft ${
+                      habit.is_completed_today ? 'bg-gradient-to-r from-success-400 to-success-500' : 'bg-gradient-to-r from-neutral-300 to-neutral-400'
                     }`}></div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{habit.name}</h3>
+                      <h3 className="font-bold text-neutral-900 text-lg">{habit.name}</h3>
                       {habit.category_name && (
-                        <p className="text-sm text-gray-600">{habit.category_name}</p>
+                        <p className="text-sm text-primary-600 font-medium">{habit.category_name}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEdit(habit)}
-                      className="text-gray-400 hover:text-blue-600"
+                      className="p-2 text-neutral-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(habit.id)}
-                      className="text-gray-400 hover:text-red-600"
+                      className="p-2 text-neutral-400 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -302,23 +304,27 @@ function Habits() {
                 </div>
 
                 {habit.description && (
-                  <p className="text-sm text-gray-600 mb-4">{habit.description}</p>
+                  <p className="text-sm text-neutral-600 mb-6 leading-relaxed">{habit.description}</p>
                 )}
 
-                <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{habit.frequency}</span>
+                <div className="flex items-center justify-between text-sm text-neutral-600 mb-6">
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-primary-100 rounded">
+                        <Clock className="h-4 w-4 text-primary-600" />
+                      </div>
+                      <span className="font-medium">{habit.frequency}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-4 w-4" />
-                      <span>{habit.points_per_completion} pts</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1 bg-secondary-100 rounded">
+                        <Star className="h-4 w-4 text-secondary-600" />
+                      </div>
+                      <span className="font-medium">{habit.points_per_completion} pts</span>
                     </div>
                   </div>
                   {habit.streak > 0 && (
-                    <div className="text-green-600 font-medium">
-                      {habit.streak} day streak
+                    <div className="text-success-600 font-bold text-lg">
+                      {habit.streak} day streak 🔥
                     </div>
                   )}
                 </div>
@@ -326,13 +332,13 @@ function Habits() {
                 {!habit.is_completed_today ? (
                   <button
                     onClick={() => completeHabit(habit.id)}
-                    className="btn btn-success w-full"
+                    className="btn btn-success w-full text-lg py-3"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-5 w-5 mr-2" />
                     Complete Today
                   </button>
                 ) : (
-                  <div className="text-center py-2 text-green-600 font-medium">
+                  <div className="text-center py-4 text-success-600 font-bold text-lg bg-gradient-to-r from-success-50 to-success-100 rounded-xl border border-success-200">
                     ✓ Completed Today
                   </div>
                 )}
