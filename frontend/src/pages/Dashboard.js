@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, apiClient } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import axios from 'axios';
 import {
   Box,
   Container,
@@ -39,8 +38,7 @@ function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      const response = await axios.get('/api/habits/dashboard/');
+      const response = await apiClient.get('/api/habits/dashboard/');
       setDashboardData(response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -52,8 +50,7 @@ function Dashboard() {
 
   const completeHabit = async (habitId) => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
-      await axios.post(`/api/habits/${habitId}/complete/`);
+      await apiClient.post(`/api/habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
       fetchDashboardData(); // Refresh data
     } catch (error) {

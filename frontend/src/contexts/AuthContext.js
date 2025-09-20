@@ -1,6 +1,62 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+// Create axios instance with automatic JWT token handling
+const apiClient = axios.create({
+  baseURL: '', // Use relative URLs since frontend is served from same domain
+});
+
+// Request interceptor to add auth token to all requests
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle token refresh
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshTokenValue = localStorage.getItem('refreshToken');
+        if (refreshTokenValue) {
+          const response = await axios.post('/api/token/refresh/', {
+            refresh: refreshTokenValue
+          });
+          
+          const { access } = response.data;
+          localStorage.setItem('accessToken', access);
+          originalRequest.headers.Authorization = `Bearer ${access}`;
+          
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+// Export the configured axios instance
+export { apiClient };
+
 const AuthContext = createContext();
 
 export function useAuth() {
@@ -25,24 +81,18 @@ export function AuthProvider({ children }) {
     try {
       const token = localStorage.getItem('accessToken');
       if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         console.log('Fetching user with token:', token.substring(0, 20) + '...');
-        // Use relative URL since frontend is served from same domain as backend
-        const response = await axios.get('/api/auth/profile/');
+        const response = await apiClient.get('/api/auth/profile/');
         setUser(response.data);
       }
     } catch (error) {
       console.error('Error fetching user:', error);
       console.error('Response status:', error.response?.status);
       console.error('Response data:', error.response?.data);
-      // If token is invalid, try to refresh it
-      if (error.response?.status === 401) {
-        await refreshToken();
-      } else {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        delete axios.defaults.headers.common['Authorization'];
-      }
+      // Token refresh is now handled by the interceptor
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -77,14 +127,12 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
       const response = await axios.post('/api/auth/login/', { email, password });
       const { user: userData, access, refresh } = response.data;
 
       console.log('Login successful, storing tokens');
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       setUser(userData);
 
       return { success: true };
@@ -129,7 +177,6 @@ export function AuthProvider({ children }) {
 
   const register = async (email, username, password, passwordConfirm) => {
     try {
-      // Use relative URL since frontend is served from same domain as backend
       const response = await axios.post('/api/auth/register/', {
         email,
         username,
@@ -140,7 +187,6 @@ export function AuthProvider({ children }) {
 
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       setUser(userData);
 
       return { success: true };
@@ -186,15 +232,13 @@ export function AuthProvider({ children }) {
     try {
       const refreshTokenValue = localStorage.getItem('refreshToken');
       if (refreshTokenValue) {
-        // Use relative URL since frontend is served from same domain as backend
-        await axios.post('/api/auth/logout/', { refresh: refreshTokenValue });
+        await axios.post('/api/token/blacklist/', { refresh: refreshTokenValue });
       }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-      delete axios.defaults.headers.common['Authorization'];
       setUser(null);
     }
   };
