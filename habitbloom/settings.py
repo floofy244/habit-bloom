@@ -51,10 +51,14 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'habitbloom.urls'
 
+# Template directories - handle case where React build doesn't exist yet
+REACT_BUILD_DIR = os.path.join(BASE_DIR, 'frontend', 'build')
+TEMPLATE_DIRS = [REACT_BUILD_DIR] if os.path.exists(REACT_BUILD_DIR) else []
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'frontend', 'build')],
+        'DIRS': TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,11 +114,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# React frontend build files
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend', 'build', 'static'),
-    os.path.join(BASE_DIR, 'staticfiles'),
-]
+# React frontend build files - only include if directory exists
+REACT_STATIC_DIR = os.path.join(BASE_DIR, 'frontend', 'build', 'static')
+STATICFILES_DIRS = [REACT_STATIC_DIR] if os.path.exists(REACT_STATIC_DIR) else []
 
 # Media files
 MEDIA_URL = '/media/'
