@@ -41,16 +41,21 @@ def login_view(request):
         if serializer.is_valid():
             user = serializer.validated_data['user']
             refresh = RefreshToken.for_user(user)
-            return Response({
+            response_data = {
                 'user': UserSerializer(user).data,
                 'access': str(refresh.access_token),
                 'refresh': str(refresh)
-            }, status=status.HTTP_200_OK)
+            }
+            print(f"Login successful for user: {user.email}")
+            print(f"Generated access token: {str(refresh.access_token)[:50]}...")
+            print(f"Generated refresh token: {str(refresh)[:50]}...")
+            return Response(response_data, status=status.HTTP_200_OK)
         return Response({
             'error': 'Login failed',
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
+        print(f"Login error: {str(e)}")
         return Response({
             'error': 'Login failed',
             'details': str(e)
@@ -61,6 +66,9 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def profile(request):
     """Get user profile."""
+    print(f"Profile request - User: {request.user}")
+    print(f"Auth header: {request.META.get('HTTP_AUTHORIZATION', 'None')}")
+    print(f"Request headers: {dict(request.META)}")
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 

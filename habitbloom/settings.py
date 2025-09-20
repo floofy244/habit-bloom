@@ -55,6 +55,27 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Debug JWT authentication
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'rest_framework_simplejwt.authentication': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'rest_framework_simplejwt.tokens': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
 # JWT Configuration
 from datetime import timedelta
 

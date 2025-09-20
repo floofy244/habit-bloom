@@ -10,8 +10,12 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
+    console.log('API Request:', config.url, 'Token:', token ? token.substring(0, 50) + '...' : 'MISSING');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Authorization header set:', config.headers.Authorization);
+    } else {
+      console.error('No access token found in localStorage!');
     }
     return config;
   },
@@ -131,6 +135,10 @@ export function AuthProvider({ children }) {
       const { user: userData, access, refresh } = response.data;
 
       console.log('Login successful, storing tokens');
+      console.log('Access token:', access ? access.substring(0, 50) + '...' : 'MISSING');
+      console.log('Refresh token:', refresh ? refresh.substring(0, 50) + '...' : 'MISSING');
+      console.log('Full response data:', response.data);
+      
       localStorage.setItem('accessToken', access);
       localStorage.setItem('refreshToken', refresh);
       setUser(userData);
