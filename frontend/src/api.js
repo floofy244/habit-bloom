@@ -8,7 +8,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'development'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 second timeout
+  timeout: 15000, 
 });
 
 // Attach token before every request
