@@ -284,7 +284,7 @@ function Habits() {
       </Dialog>
 
       {/* Habits List */}
-      {memoizedHabits.length === 0 ? (
+      {habits.length === 0 ? (
         <Card sx={{ textAlign: 'center', py: 8 }}>
           <CardContent>
             <Avatar sx={{ width: 96, height: 96, mx: 'auto', mb: 3, bgcolor: 'primary.main' }}>
@@ -310,7 +310,7 @@ function Habits() {
         </Card>
       ) : (
         <Grid container spacing={3}>
-          {memoizedHabits.map((habit) => (
+          {habits.map((habit) => (
             <Grid item xs={12} md={6} lg={4} key={habit.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>

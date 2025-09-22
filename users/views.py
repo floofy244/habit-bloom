@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.conf import settings
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
 
 
@@ -46,16 +47,16 @@ def login_view(request):
                 'access': str(refresh.access_token),
                 'refresh': str(refresh)
             }
-            print(f"Login successful for user: {user.email}")
-            print(f"Generated access token: {str(refresh.access_token)[:50]}...")
-            print(f"Generated refresh token: {str(refresh)[:50]}...")
+            if settings.DEBUG:
+                print(f"Login successful for user: {user.email}")
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({
             'error': 'Login failed',
             'details': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print(f"Login error: {str(e)}")
+        if settings.DEBUG:
+            print(f"Login error: {str(e)}")
         return Response({
             'error': 'Login failed',
             'details': str(e)
@@ -66,9 +67,8 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def profile(request):
     """Get user profile."""
-    print(f"Profile request - User: {request.user}")
-    print(f"Auth header: {request.META.get('HTTP_AUTHORIZATION', 'None')}")
-    print(f"Request headers: {dict(request.META)}")
+    if settings.DEBUG:
+        print(f"Profile request - User: {request.user}")
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 

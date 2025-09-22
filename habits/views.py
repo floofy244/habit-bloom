@@ -23,7 +23,8 @@ class HabitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return Habit.objects.filter(user=self.request.user, is_active=True)
+        return (Habit.objects.filter(user=self.request.user, is_active=True)
+                .select_related('category'))
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -60,16 +61,34 @@ class HabitViewSet(viewsets.ModelViewSet):
         user = request.user
         habits = self.get_queryset()
         
-        # Calculate stats
+        # Calculate stats (optimized)
         total_habits = habits.count()
-        completed_today = sum(1 for habit in habits if habit.is_completed_today())
+
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+
+        daily_ids = habits.filter(frequency='daily').values_list('id', flat=True)
+        weekly_ids = habits.filter(frequency='weekly').values_list('id', flat=True)
+
+        completed_daily_count = Completion.objects.filter(
+            habit_id__in=daily_ids,
+            completed_at__date=today,
+        ).values('habit_id').distinct().count()
+
+        completed_weekly_count = Completion.objects.filter(
+            habit_id__in=weekly_ids,
+            completed_at__date__gte=week_start,
+            completed_at__date__lte=today,
+        ).values('habit_id').distinct().count()
+
+        completed_today = completed_daily_count + completed_weekly_count
         
         # Get recent completions (last 7 days)
-        week_ago = date.today() - timedelta(days=7)
+        week_ago = today - timedelta(days=7)
         recent_completions = Completion.objects.filter(
             habit__user=user,
             completed_at__date__gte=week_ago
-        ).order_by('-completed_at')[:10]
+        ).select_related('habit').order_by('-completed_at')[:10]
         
         dashboard_data = {
             'total_habits': total_habits,
@@ -90,6 +109,6 @@ class CompletionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return Completion.objects.filter(habit__user=self.request.user)
+        return Completion.objects.filter(habit__user=self.request.user).select_related('habit')
     
     serializer_class = CompletionSerializer
