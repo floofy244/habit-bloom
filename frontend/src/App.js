@@ -8,12 +8,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import theme from './theme';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
-import Login from './pages/Login';
-import Register from './pages/Register';
 
-// lazy-load Dashboard (code-split)
+// lazy-load pages to reduce initial bundle
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-// keep other pages as normal (or lazy-load them too)
 const Habits = lazy(() => import('./pages/Habits'));
 const Profile = lazy(() => import('./pages/Profile'));
 

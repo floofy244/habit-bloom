@@ -55,20 +55,27 @@ function Register() {
       return;
     }
 
+    // Block non-HTTPS in non-localhost to avoid sending credentials unencrypted
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      toast.error('Insecure connection detected. Please use HTTPS to protect your credentials.');
+      setLoading(false);
+      return;
+    }
+
     const result = await register(
-      formData.email, 
-      formData.username, 
-      formData.password, 
+      formData.email,
+      formData.username,
+      formData.password,
       formData.passwordConfirm
     );
-    
+
     if (result.success) {
       toast.success('Account created successfully! Welcome to HabitBloom! You can now start building your habits.');
       navigate('/dashboard');
     } else {
       toast.error(result.error);
     }
-    
+
     setLoading(false);
   };
 

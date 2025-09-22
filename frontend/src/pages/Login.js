@@ -45,15 +45,22 @@ function Login() {
     e.preventDefault();
     setLoading(true);
 
-          const result = await login(formData.email, formData.password);
+    // Block non-HTTPS in non-localhost to avoid sending credentials unencrypted
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      toast.error('Insecure connection detected. Please use HTTPS to protect your credentials.');
+      setLoading(false);
+      return;
+    }
 
-          if (result.success) {
-            toast.success('Welcome back! You have been successfully logged in.');
-            navigate('/dashboard');
-          } else {
-            toast.error(result.error);
-          }
-    
+    const result = await login(formData.email, formData.password);
+
+    if (result.success) {
+      toast.success('Welcome back! You have been successfully logged in.');
+      navigate('/dashboard');
+    } else {
+      toast.error(result.error);
+    }
+
     setLoading(false);
   };
 

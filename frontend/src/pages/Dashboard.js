@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
@@ -29,39 +29,67 @@ import {
 } from '@mui/icons-material';
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, updateUserStats, fetchUser } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState({});
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const response = await api.get('habits/dashboard/');
+      setDashboardData(response.data);
+      // Update navbar stats
+      if (response.data.total_points !== user?.total_points || 
+          response.data.current_level !== user?.current_level) {
+        updateUserStats(response.data.total_points, response.data.current_level);
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      if (!dashboardData) {
+        toast.error('Failed to load dashboard data');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [user, updateUserStats, dashboardData]);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const completeHabit = useCallback(async (habitId) => {
+    if (completing[habitId]) return;
+    
+    setCompleting(prev => ({ ...prev, [habitId]: true }));
     try {
-      const response = await api.get('habits/dashboard/');
-      setDashboardData(response.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const completeHabit = async (habitId) => {
-    try {
-      await api.post(`habits/${habitId}/complete/`);
+      const response = await api.post(`habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
-      fetchDashboardData(); // Refresh data
+      
+      // Optimistically update UI
+      setDashboardData(prev => ({
+        ...prev,
+        completed_today: prev.completed_today + 1,
+        habits: prev.habits.map(h => 
+          h.id === habitId ? { ...h, is_completed_today: true } : h
+        )
+      }));
+      
+      // Fetch fresh data and update user stats
+      const freshData = await fetchDashboardData();
+      if (freshData) {
+        await fetchUser(); // Update user in navbar
+      }
     } catch (error) {
       if (error.response?.status === 400) {
         toast.info('Habit already completed today!');
       } else {
         toast.error('Failed to complete habit');
       }
+    } finally {
+      setCompleting(prev => ({ ...prev, [habitId]: false }));
     }
-  };
+  }, [completing, fetchDashboardData, fetchUser]);
 
   if (loading) {
     return (

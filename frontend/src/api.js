@@ -1,21 +1,22 @@
 // src/api.js
 import axios from "axios";
 
+// Use local API in development, production API in production
+const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? "http://localhost:8000/api/"
+  : "https://habitbloom.onrender.com/api/";
+
 const api = axios.create({
-  baseURL: "https://habitbloom.onrender.com/api/",
+  baseURL: API_BASE_URL,
+  timeout: 10000, // 10 second timeout
 });
 
 // Attach token before every request
 api.interceptors.request.use(
   (config) => {
-    // get token from localStorage
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('API Request:', config.url, 'Token:', token ? token.substring(0, 50) + '...' : 'MISSING');
-      console.log('Authorization header set:', config.headers.Authorization);
-    } else {
-      console.error('No access token found in localStorage!');
     }
     return config;
   },
@@ -34,7 +35,7 @@ api.interceptors.response.use(
       try {
         const refreshTokenValue = localStorage.getItem('refreshToken');
         if (refreshTokenValue) {
-          const response = await axios.post('https://habitbloom.onrender.com/api/token/refresh/', {
+          const response = await axios.post(`${API_BASE_URL}token/refresh/`, {
             refresh: refreshTokenValue
           });
           

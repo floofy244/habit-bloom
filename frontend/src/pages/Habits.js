@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { toast } from 'react-toastify';
 import api from '../api';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 
 import {
   Box,
@@ -39,6 +39,10 @@ import {
 } from '@mui/icons-material';
 
 function Habits() {
+  const { fetchUser } = useAuth();
+  const [habits, setHabits] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [formData, setFormData] = useState({
@@ -49,34 +53,25 @@ function Habits() {
     points_per_completion: 10
   });
 
-  const queryClient = useQueryClient();
-
-  // cached queries
-  const { data: habits = [], isLoading: habitsLoading } = useQuery(
-    ['habits'],
-    () => api.get('habits/').then(r => r.data.results || []),
-  );
-
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery(
-    ['categories'],
-    () => api.get('categories/').then(r => r.data.results || []),
-  );
-
-  // mutations (invalidate cached habits after changes)
-  const createHabit = useMutation((payload) => api.post('habits/', payload), {
-    onSuccess: () => queryClient.invalidateQueries(['habits']),
-  });
-  const updateHabit = useMutation(({ id, payload }) => api.put(`habits/${id}/`, payload), {
-    onSuccess: () => queryClient.invalidateQueries(['habits']),
-  });
-  const deleteHabit = useMutation((id) => api.delete(`habits/${id}/`), {
-    onSuccess: () => queryClient.invalidateQueries(['habits']),
-  });
-  const completeHabitMut = useMutation((id) => api.post(`habits/${id}/complete/`), {
-    onSuccess: () => queryClient.invalidateQueries(['habits']),
-  });
-
-  const loading = habitsLoading || categoriesLoading;
+  // Fetch habits and categories
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [habitsRes, categoriesRes] = await Promise.all([
+          api.get('habits/'),
+          api.get('categories/')
+        ]);
+        setHabits(habitsRes.data.results || []);
+        setCategories(categoriesRes.data.results || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load habits');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const resetForm = useCallback(() => {
     setShowForm(false);
@@ -94,21 +89,31 @@ function Habits() {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   }, []);
 
+  const refreshHabits = useCallback(async () => {
+    try {
+      const response = await api.get('habits/');
+      setHabits(response.data.results || []);
+    } catch (error) {
+      console.error('Error refreshing habits:', error);
+    }
+  }, []);
+
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     try {
       if (editingHabit) {
-        await updateHabit.mutateAsync({ id: editingHabit.id, payload: formData });
+        await api.put(`habits/${editingHabit.id}/`, formData);
         toast.success('Habit updated successfully!');
       } else {
-        await createHabit.mutateAsync(formData);
+        await api.post('habits/', formData);
         toast.success('Habit created successfully!');
       }
       resetForm();
+      refreshHabits();
     } catch (err) {
       toast.error('Failed to save habit');
     }
-  }, [editingHabit, formData, createHabit, updateHabit, resetForm]);
+  }, [editingHabit, formData, resetForm, refreshHabits]);
 
   const handleEdit = useCallback((habit) => {
     setEditingHabit(habit);
@@ -125,17 +130,20 @@ function Habits() {
   const handleDelete = useCallback(async (habitId) => {
     if (!window.confirm('Are you sure you want to delete this habit?')) return;
     try {
-      await deleteHabit.mutateAsync(habitId);
+      await api.delete(`habits/${habitId}/`);
       toast.success('Habit deleted successfully!');
+      refreshHabits();
     } catch (err) {
       toast.error('Failed to delete habit');
     }
-  }, [deleteHabit]);
+  }, [refreshHabits]);
 
   const completeHabit = useCallback(async (habitId) => {
     try {
-      await completeHabitMut.mutateAsync(habitId);
+      await api.post(`habits/${habitId}/complete/`);
       toast.success('Habit completed! Great job!');
+      refreshHabits();
+      fetchUser(); // Update navbar stats
     } catch (error) {
       if (error.response?.status === 400) {
         toast.info('Habit already completed today!');
@@ -143,9 +151,7 @@ function Habits() {
         toast.error('Failed to complete habit');
       }
     }
-  }, [completeHabitMut]);
-
-  const memoizedHabits = useMemo(() => habits, [habits]);
+  }, [refreshHabits, fetchUser]);
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -22,23 +22,15 @@ import {
   Spa as LogoIcon,
 } from '@mui/icons-material';
 
-function Navbar() {
+const Navbar = memo(function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
 
   return (
     <AppBar position="sticky" elevation={1}>
@@ -126,6 +118,6 @@ function Navbar() {
       </Container>
     </AppBar>
   );
-}
+});
 
 export default Navbar;
