@@ -55,10 +55,19 @@ function Habits() {
     fetchCategories();
   }, []);
 
+  const normalizeResponseArray = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data.results && Array.isArray(data.results)) return data.results;
+    // fallback: if server returns an object map
+    if (typeof data === 'object') return Object.values(data);
+    return [];
+  };
+
   const fetchHabits = async () => {
     try {
       const response = await api.get('habits/');
-      setHabits(response.data);
+      setHabits(normalizeResponseArray(response.data));
     } catch (error) {
       console.error('Error fetching habits:', error);
       toast.error('Failed to load habits');
@@ -70,7 +79,7 @@ function Habits() {
   const fetchCategories = async () => {
     try {
       const response = await api.get('categories/');
-      setCategories(response.data);
+      setCategories(normalizeResponseArray(response.data));
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
