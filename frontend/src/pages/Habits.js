@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import api from '../api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Container,
@@ -37,9 +38,6 @@ import {
 } from '@mui/icons-material';
 
 function Habits() {
-  const [habits, setHabits] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [formData, setFormData] = useState({
@@ -50,114 +48,36 @@ function Habits() {
     points_per_completion: 10
   });
 
-  useEffect(() => {
-    fetchHabits();
-    fetchCategories();
-  }, []);
+  const queryClient = useQueryClient();
 
-  const normalizeResponseArray = (data) => {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (data.results && Array.isArray(data.results)) return data.results;
-    // fallback: if server returns an object map
-    if (typeof data === 'object') return Object.values(data);
-    return [];
-  };
+  // cached queries
+  const { data: habits = [], isLoading: habitsLoading } = useQuery(
+    ['habits'],
+    () => api.get('habits/').then(r => r.data.results || []),
+  );
 
-  const fetchHabits = async () => {
-    try {
-      const response = await api.get('habits/');
-      setHabits(normalizeResponseArray(response.data));
-    } catch (error) {
-      console.error('Error fetching habits:', error);
-      toast.error('Failed to load habits');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery(
+    ['categories'],
+    () => api.get('categories/').then(r => r.data.results || []),
+  );
 
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get('categories/');
-      setCategories(normalizeResponseArray(response.data));
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
+  // mutations (invalidate cached habits after changes)
+  const createHabit = useMutation((payload) => api.post('habits/', payload), {
+    onSuccess: () => queryClient.invalidateQueries(['habits']),
+  });
+  const updateHabit = useMutation(({ id, payload }) => api.put(`habits/${id}/`, payload), {
+    onSuccess: () => queryClient.invalidateQueries(['habits']),
+  });
+  const deleteHabit = useMutation((id) => api.delete(`habits/${id}/`), {
+    onSuccess: () => queryClient.invalidateQueries(['habits']),
+  });
+  const completeHabitMut = useMutation((id) => api.post(`habits/${id}/complete/`), {
+    onSuccess: () => queryClient.invalidateQueries(['habits']),
+  });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const loading = habitsLoading || categoriesLoading;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      if (editingHabit) {
-        await api.put(`habits/${editingHabit.id}/`, formData);
-        toast.success('Habit updated successfully!');
-      } else {
-        await api.post('habits/', formData);
-        toast.success('Habit created successfully!');
-      }
-      
-      setShowForm(false);
-      setEditingHabit(null);
-      setFormData({
-        name: '',
-        description: '',
-        category: '',
-        frequency: 'daily',
-        points_per_completion: 10
-      });
-      fetchHabits();
-    } catch (error) {
-      toast.error('Failed to save habit');
-    }
-  };
-
-  const handleEdit = (habit) => {
-    setEditingHabit(habit);
-    setFormData({
-      name: habit.name,
-      description: habit.description,
-      category: habit.category || '',
-      frequency: habit.frequency,
-      points_per_completion: habit.points_per_completion
-    });
-    setShowForm(true);
-  };
-
-  const handleDelete = async (habitId) => {
-    if (window.confirm('Are you sure you want to delete this habit?')) {
-      try {
-        await api.delete(`habits/${habitId}/`);
-        toast.success('Habit deleted successfully!');
-        fetchHabits();
-      } catch (error) {
-        toast.error('Failed to delete habit');
-      }
-    }
-  };
-
-  const completeHabit = async (habitId) => {
-    try {
-      await api.post(`habits/${habitId}/complete/`);
-      toast.success('Habit completed! Great job!');
-      fetchHabits();
-    } catch (error) {
-      if (error.response?.status === 400) {
-        toast.info('Habit already completed today!');
-      } else {
-        toast.error('Failed to complete habit');
-      }
-    }
-  };
-
-  const cancelForm = () => {
+  const resetForm = useCallback(() => {
     setShowForm(false);
     setEditingHabit(null);
     setFormData({
@@ -167,7 +87,64 @@ function Habits() {
       frequency: 'daily',
       points_per_completion: 10
     });
-  };
+  }, []);
+
+  const handleChange = useCallback((e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    try {
+      if (editingHabit) {
+        await updateHabit.mutateAsync({ id: editingHabit.id, payload: formData });
+        toast.success('Habit updated successfully!');
+      } else {
+        await createHabit.mutateAsync(formData);
+        toast.success('Habit created successfully!');
+      }
+      resetForm();
+    } catch (err) {
+      toast.error('Failed to save habit');
+    }
+  }, [editingHabit, formData, createHabit, updateHabit, resetForm]);
+
+  const handleEdit = useCallback((habit) => {
+    setEditingHabit(habit);
+    setFormData({
+      name: habit.name,
+      description: habit.description,
+      category: habit.category || '',
+      frequency: habit.frequency,
+      points_per_completion: habit.points_per_completion
+    });
+    setShowForm(true);
+  }, []);
+
+  const handleDelete = useCallback(async (habitId) => {
+    if (!window.confirm('Are you sure you want to delete this habit?')) return;
+    try {
+      await deleteHabit.mutateAsync(habitId);
+      toast.success('Habit deleted successfully!');
+    } catch (err) {
+      toast.error('Failed to delete habit');
+    }
+  }, [deleteHabit]);
+
+  const completeHabit = useCallback(async (habitId) => {
+    try {
+      await completeHabitMut.mutateAsync(habitId);
+      toast.success('Habit completed! Great job!');
+    } catch (error) {
+      if (error.response?.status === 400) {
+        toast.info('Habit already completed today!');
+      } else {
+        toast.error('Failed to complete habit');
+      }
+    }
+  }, [completeHabitMut]);
+
+  const memoizedHabits = useMemo(() => habits, [habits]);
 
   if (loading) {
     return (
@@ -202,7 +179,7 @@ function Habits() {
       </Box>
 
       {/* Add/Edit Form Dialog */}
-      <Dialog open={showForm} onClose={cancelForm} maxWidth="md" fullWidth>
+      <Dialog open={showForm} onClose={resetForm} maxWidth="md" fullWidth>
         <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 600 }}>
             {editingHabit ? 'Edit Habit' : 'Add New Habit'}
@@ -285,7 +262,7 @@ function Habits() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={cancelForm} color="inherit">
+          <Button onClick={resetForm} color="inherit">
             Cancel
           </Button>
           <Button
@@ -300,7 +277,7 @@ function Habits() {
       </Dialog>
 
       {/* Habits List */}
-      {habits.length === 0 ? (
+      {memoizedHabits.length === 0 ? (
         <Card sx={{ textAlign: 'center', py: 8 }}>
           <CardContent>
             <Avatar sx={{ width: 96, height: 96, mx: 'auto', mb: 3, bgcolor: 'primary.main' }}>
@@ -326,7 +303,7 @@ function Habits() {
         </Card>
       ) : (
         <Grid container spacing={3}>
-          {habits.map((habit) => (
+          {memoizedHabits.map((habit) => (
             <Grid item xs={12} md={6} lg={4} key={habit.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
